@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>🎲 던전톡 - 황혼의 새벽 TRPG</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0c0c0c 0%, #1a1a2e 50%, #16213e 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 80%, rgba(255, 107, 53, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 107, 53, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.02) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .header {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            text-align: center;
+            border-bottom: 3px solid #ff6b35;
+            box-shadow: 0 4px 20px rgba(255, 107, 53, 0.3);
+        }
+
+        .header h1 {
+            color: #ff6b35;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #b0b0b0;
+            font-size: 1.1em;
+        }
+
+        .game-container {
+            display: flex;
+            flex: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .left-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .right-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 107, 53, 0.5), transparent);
+            border-radius: 20px 20px 0 0;
+        }
+
+        .panel:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        .panel h3 {
+            color: #ff6b35;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            border-bottom: 2px solid #ff6b35;
+            padding-bottom: 5px;
+        }
+
+        .chat-container {
+            height: 500px;
+            overflow-y: auto;
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.4);
+            margin-bottom: 15px;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 10px;
+            line-height: 1.6;
+        }
+
+        .message.dm {
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            margin-left: 0;
+            margin-right: 50px;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        }
+
+        .message.dm::before {
+            content: '🎲';
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+            background: rgba(255, 107, 53, 0.9);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.player {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            margin-left: 50px;
+            margin-right: 0;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.3);
+        }
+
+        .message.player::before {
+            content: '🎮';
+            position: absolute;
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2em;
+            background: rgba(74, 144, 226, 0.9);
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .message.system {
+            background: rgba(128, 128, 128, 0.3);
+            color: #ccc;
+            text-align: center;
+            font-style: italic;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #444;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            color: #e0e0e0;
+            font-size: 16px;
+        }
+
+        .message-input:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .send-btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #ff6b35, #f7931e);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 53, 0.4);
+        }
+
+        .character-sheet {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 107, 53, 0.1);
+            border-radius: 8px;
+            border: 1px solid #ff6b35;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .quick-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .action-btn {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid #555;
+            border-radius: 20px;
+            color: #e0e0e0;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 107, 53, 0.3);
+            border-color: #ff6b35;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+
+        .inventory-item {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid #444;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8em;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .inventory-item:hover {
+            border-color: #ff6b35;
+            background: rgba(255, 107, 53, 0.2);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            color: #ff6b35;
+            font-style: italic;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .message.dm {
+            animation: slideInLeft 0.5s ease-out;
+        }
+
+        .message.player {
+            animation: slideInRight 0.5s ease-out;
+        }
+
+        .typing-indicator {
+            display: none;
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(255, 107, 53, 0.1);
+            border-radius: 10px;
+            color: #ff6b35;
+            font-style: italic;
+        }
+
+        .typing-indicator::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60% { content: '...'; }
+            80%, 100% { content: ''; }
+        }
+
+        .dice-result {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .game-container {
+                flex-direction: column;
+                padding: 15px;
+                gap: 15px;
+            }
+            
+            .header {
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 1.8em;
+            }
+            
+            .header p {
+                font-size: 1em;
+            }
+            
+            .panel {
+                padding: 20px;
+            }
+            
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .stat-item {
+                padding: 8px;
+            }
+            
+            .stat-value {
+                font-size: 1.3em;
+            }
+            
+            .chat-container {
+                height: 400px;
+            }
+            
+            .message {
+                margin-bottom: 12px;
+                padding: 12px;
+                margin-left: 0;
+                margin-right: 0;
+            }
+            
+            .message.dm::before,
+            .message.player::before {
+                display: none;
+            }
+            
+            .inventory-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .action-btn {
+                padding: 12px 16px;
+                font-size: 1em;
+                min-height: 44px;
+            }
+            
+            .send-btn {
+                padding: 15px 20px;
+                font-size: 1em;
+                min-height: 50px;
+            }
+            
+            .message-input {
+                padding: 15px;
+                font-size: 16px;
+                min-height: 50px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .game-container {
+                padding: 10px;
+                gap: 10px;
+            }
+            
+            .header {
+                padding: 12px;
+            }
+            
+            .header h1 {
+                font-size: 1.5em;
+                margin-bottom: 8px;
+            }
+            
+            .header p {
+                font-size: 0.9em;
+            }
+            
+            .panel {
+                padding: 15px;
+            }
+            
+            .panel h3 {
+                font-size: 1.1em;
+                margin-bottom: 12px;
+            }
+            
+            .stat-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 6px;
+            }
+            
+            .stat-item {
+                padding: 6px;
+                font-size: 0.9em;
+            }
+            
+            .stat-value {
+                font-size: 1.2em;
+            }
+            
+            .chat-container {
+                height: 350px;
+                padding: 12px;
+            }
+            
+            .message {
+                padding: 10px;
+                font-size: 0.95em;
+                margin-bottom: 10px;
+            }
+            
+            .inventory-grid {
+                grid-template-columns: repeat(4, 1fr);
+                gap: 6px;
+            }
+            
+            .inventory-item {
+                font-size: 0.7em;
+            }
+            
+            .quick-actions {
+                gap: 6px;
+            }
+            
+            .action-btn {
+                padding: 10px 12px;
+                font-size: 0.9em;
+                min-height: 42px;
+            }
+            
+            .input-container {
+                gap: 8px;
+            }
+            
+            .send-btn {
+                padding: 12px 16px;
+                font-size: 0.9em;
+                min-height: 48px;
+            }
+            
+            .message-input {
+                padding: 12px;
+                font-size: 16px;
+                min-height: 48px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .header h1 {
+                font-size: 1.3em;
+            }
+            
+            .stat-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-btn {
+                font-size: 0.8em;
+                padding: 8px 10px;
+                min-height: 40px;
+            }
+            
+            .panel h3 {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎲 던전톡 - 황혼의 새벽</h1>
+        <p>AI 던전마스터와 함께하는 포스트 아포칼립스 TRPG</p>
+    </div>
+
+    <div class="game-container">
+        <div class="left-panel">
+            <!-- 캐릭터 시트 -->
+            <div class="panel">
+                <h3>📋 캐릭터 정보</h3>
+                <div class="character-sheet">
+                    <div style="text-align: center; margin-bottom: 15px;">
+                        <strong id="character-name">생존자</strong>
+                        <br>
+                        <small id="character-class">신입 생존자</small>
+                    </div>
+                    
+                    <div class="stat-grid">
+                        <div class="stat-item">
+                            <div>힘</div>
+                            <div class="stat-value" id="stat-str">10</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>민첩</div>
+                            <div class="stat-value" id="stat-dex">12</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>지능</div>
+                            <div class="stat-value" id="stat-int">11</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>체력</div>
+                            <div class="stat-value" id="stat-con">10</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>인식</div>
+                            <div class="stat-value" id="stat-per">13</div>
+                        </div>
+                        <div class="stat-item">
+                            <div>의지</div>
+                            <div class="stat-value" id="stat-wil">9</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 10px;">
+                        <strong>HP:</strong> <span id="current-hp">25</span>/<span id="max-hp">25</span>
+                        <div style="background: #333; height: 8px; border-radius: 4px; margin-top: 5px;">
+                            <div id="hp-bar" style="background: #e74c3c; height: 100%; border-radius: 4px; width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 빠른 액션 -->
+            <div class="panel">
+                <h3>⚡ 빠른 액션</h3>
+                <div class="quick-actions">
+                    <button class="action-btn" onclick="rollDice('d20')">🎲 d20 굴리기</button>
+                    <button class="action-btn" onclick="rollDice('d6')">🎲 d6 굴리기</button>
+                    <button class="action-btn" onclick="quickAction('look')">👁️ 둘러보기</button>
+                    <button class="action-btn" onclick="quickAction('inventory')">🎒 인벤토리</button>
+                    <button class="action-btn" onclick="quickAction('rest')">😴 휴식</button>
+                    <button class="action-btn" onclick="quickAction('help')">❓ 도움말</button>
+                </div>
+            </div>
+
+            <!-- 인벤토리 -->
+            <div class="panel">
+                <h3>🎒 인벤토리</h3>
+                <div class="inventory-grid">
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                    <div class="inventory-item" title="비어있음">-</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="right-panel">
+            <!-- 게임 채팅 -->
+            <div class="panel" style="flex: 1;">
+                <h3>💬 게임 진행</h3>
+                <div class="chat-container" id="chat-container">
+                    <div class="message system">
+                        🎮 던전톡에 오신 것을 환영합니다! AI 던전마스터가 여러분을 황혼의 새벽 세계로 안내할 예정입니다.
+                    </div>
+                    <div class="message dm">
+                        🎲 <strong>던전마스터:</strong> 안녕하세요, 용감한 생존자! 
+                        <br><br>
+                        서기 2040년, 아케론 바이러스가 세상을 집어삼킨 지 5년이 지났습니다. 당신은 폐허가 된 도시 외곽에서 깨어났습니다. 
+                        <br><br>
+                        주변은 고요하지만... 너무 고요합니다. 멀리서 무언가 움직이는 소리가 들립니다.
+                        <br><br>
+                        무엇을 하시겠습니까?
+                    </div>
+                </div>
+                <div class="loading" id="loading">🤖 던전마스터가 생각 중...</div>
+                <div class="typing-indicator" id="typing-indicator">🎲 던전마스터가 응답을 준비하고 있습니다</div>
+                <div class="input-container">
+                    <input type="text" 
+                           class="message-input" 
+                           id="message-input" 
+                           placeholder="행동을 입력하세요... (예: 주변을 살펴본다, 소리가 나는 곳으로 간다)"
+                           maxlength="500">
+                    <button class="send-btn" onclick="sendMessage()">보내기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 게임 상태
+        let gameState = {
+            character: {
+                name: "생존자",
+                class: "신입 생존자",
+                hp: 25,
+                maxHp: 25,
+                stats: {
+                    str: 10,
+                    dex: 12,
+                    int: 11,
+                    con: 10,
+                    per: 13,
+                    wil: 9
+                }
+            },
+            inventory: [],
+            gameHistory: []
+        };
+
+        // 페이지 로드 시 초기화
+        document.addEventListener('DOMContentLoaded', function() {
+            const input = document.getElementById('message-input');
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            // 초기 게임 상태 체크
+            checkGameStatus();
+        });
+
+        // 메시지 전송
+        async function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // 플레이어 메시지 추가
+            addMessage(message, 'player');
+            input.value = '';
+            
+            // 로딩 표시
+            showLoading(true);
+            
+            try {
+                // AI 응답 요청
+                const response = await fetch('/api/game/action', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: message,
+                        gameState: gameState
+                    })
+                });
+                
+                const result = await response.json();
+                
+                // DM 응답 추가
+                addMessage(result.response, 'dm');
+                
+                // 게임 상태 업데이트
+                if (result.newGameState) {
+                    updateGameState(result.newGameState);
+                }
+                
+                // 주사위 결과가 있으면 표시
+                if (result.diceRoll) {
+                    addDiceResult(result.diceRoll);
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                addMessage('❌ 오류가 발생했습니다. 잠시 후 다시 시도해주세요.', 'system');
+            }
+            
+            showLoading(false);
+        }
+
+        // 메시지 추가
+        function addMessage(content, type) {
+            const chatContainer = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (type === 'dm') {
+                messageDiv.innerHTML = `🎲 <strong>던전마스터:</strong> ${content}`;
+            } else if (type === 'player') {
+                messageDiv.innerHTML = `🎮 <strong>당신:</strong> ${content}`;
+            } else {
+                messageDiv.innerHTML = content;
+            }
+            
+            chatContainer.appendChild(messageDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 주사위 결과 표시
+        function addDiceResult(diceData) {
+            const chatContainer = document.getElementById('chat-container');
+            const diceDiv = document.createElement('div');
+            diceDiv.className = 'dice-result';
+            diceDiv.innerHTML = `🎲 ${diceData.type} 결과: ${diceData.result} ${diceData.success ? '(성공!)' : '(실패...)'}`;
+            chatContainer.appendChild(diceDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        // 로딩 표시
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            const typing = document.getElementById('typing-indicator');
+            
+            if (show) {
+                typing.style.display = 'block';
+                loading.style.display = 'block';
+                // 입력 비활성화
+                document.getElementById('message-input').disabled = true;
+                document.querySelector('.send-btn').disabled = true;
+            } else {
+                typing.style.display = 'none';
+                loading.style.display = 'none';
+                // 입력 활성화
+                document.getElementById('message-input').disabled = false;
+                document.querySelector('.send-btn').disabled = false;
+                // 입력창에 포커스
+                document.getElementById('message-input').focus();
+            }
+        }
+
+        // 주사위 굴리기
+        function rollDice(type) {
+            const result = Math.floor(Math.random() * parseInt(type.substring(1))) + 1;
+            addMessage(`${type} 굴리기 결과: ${result}`, 'system');
+        }
+
+        // 빠른 액션
+        async function quickAction(action) {
+            const actions = {
+                'look': '주변을 자세히 살펴본다',
+                'inventory': '인벤토리를 확인한다',
+                'rest': '잠시 휴식을 취한다',
+                'help': '도움말을 요청한다'
+            };
+            
+            if (actions[action]) {
+                document.getElementById('message-input').value = actions[action];
+                sendMessage();
+            }
+        }
+
+        // 게임 상태 업데이트
+        function updateGameState(newState) {
+            gameState = { ...gameState, ...newState };
+            
+            // UI 업데이트
+            if (newState.character) {
+                updateCharacterUI(newState.character);
+            }
+        }
+
+        // 캐릭터 UI 업데이트
+        function updateCharacterUI(character) {
+            if (character.hp !== undefined) {
+                document.getElementById('current-hp').textContent = character.hp;
+                const hpPercent = (character.hp / character.maxHp) * 100;
+                document.getElementById('hp-bar').style.width = hpPercent + '%';
+                
+                // HP에 따른 색상 변경
+                const hpBar = document.getElementById('hp-bar');
+                if (hpPercent > 60) {
+                    hpBar.style.background = '#27ae60';
+                } else if (hpPercent > 30) {
+                    hpBar.style.background = '#f39c12';
+                } else {
+                    hpBar.style.background = '#e74c3c';
+                }
+            }
+        }
+
+        // 게임 상태 체크
+        async function checkGameStatus() {
+            try {
+                const response = await fetch('/api/perfect/stats');
+                const status = await response.json();
+                
+                if (status.status === 'perfect') {
+                    console.log('✅ RAG 시스템 연결 완료');
+                    addMessage('✅ RAG 시스템 연결 완료! 게임을 시작할 수 있습니다.', 'system');
+                } else {
+                    addMessage('⚠️ 시스템 연결 확인 중...', 'system');
+                }
+            } catch (error) {
+                addMessage('❌ 서버 연결에 문제가 있습니다.', 'system');
+                console.error('연결 오류:', error);
+            }
+        }
+
+        // 간단한 테스트 함수
+        function testGameAction() {
+            addMessage('주변을 살펴본다', 'player');
+            
+            // 간단한 테스트 응답
+            setTimeout(() => {
+                addMessage('🔍 당신은 주변을 신중하게 살펴봅니다. 폐허가 된 건물들 사이로 차가운 바람이 불어옵니다. 멀리서 까마귀들이 날아오르며, 어딘가에서 금속이 부딪히는 소리가 들립니다.', 'dm');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
